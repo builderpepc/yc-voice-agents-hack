@@ -79,23 +79,26 @@ actual class WearableConnector {
         val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, encoding)
             .coerceAtLeast(4096)
 
-        // VOICE_COMMUNICATION captures from the active communication device (BT SCO if routed).
-        val record = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-            sampleRate,
-            channelConfig,
-            encoding,
-            bufferSize,
-        )
+        // On emulator, VOICE_COMMUNICATION returns silence. Use MIC first.
+        val isEmulator = Build.FINGERPRINT.contains("generic") || Build.FINGERPRINT.contains("emulator")
+                || Build.MODEL.contains("Emulator") || Build.MODEL.contains("Android SDK")
+                || Build.MANUFACTURER.contains("Google") && Build.PRODUCT.contains("sdk")
+
+        val primarySource = if (isEmulator) MediaRecorder.AudioSource.MIC else MediaRecorder.AudioSource.VOICE_COMMUNICATION
+        val fallbackSource = if (isEmulator) MediaRecorder.AudioSource.VOICE_COMMUNICATION else MediaRecorder.AudioSource.MIC
+        val primaryLabel = if (isEmulator) "MIC" else "VOICE_COMMUNICATION"
+        val fallbackLabel = if (isEmulator) "VOICE_COMMUNICATION" else "MIC"
+
+        val record = AudioRecord(primarySource, sampleRate, channelConfig, encoding, bufferSize)
 
         if (record.state != AudioRecord.STATE_INITIALIZED) {
-            android.util.Log.e(TAG, "AudioRecord failed to initialize — falling back to MIC")
+            android.util.Log.e(TAG, "AudioRecord ($primaryLabel) failed to initialize — falling back to $fallbackLabel")
             record.release()
-            startAudioStreamWithSource(MediaRecorder.AudioSource.MIC, sampleRate, channelConfig, encoding, bufferSize, onUtteranceReady)
+            startAudioStreamWithSource(fallbackSource, sampleRate, channelConfig, encoding, bufferSize, onUtteranceReady)
             return
         }
 
-        android.util.Log.d(TAG, "AudioRecord initialized: source=VOICE_COMMUNICATION sampleRate=$sampleRate bufferSize=$bufferSize")
+        android.util.Log.d(TAG, "AudioRecord initialized: source=$primaryLabel sampleRate=$sampleRate bufferSize=$bufferSize")
         audioRecord = record
         launchRecordLoop(record, bufferSize, onUtteranceReady)
     }

@@ -25,6 +25,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import java.io.File
 import androidx.compose.runtime.mutableStateOf
 import com.example.wearableai.databinding.ActivityMainBinding
+import com.example.wearableai.shared.FORM_FIELD_DEFINITIONS
+import com.example.wearableai.shared.FormField
+import com.example.wearableai.shared.FormSection
 import com.example.wearableai.shared.NoteCategory
 import com.example.wearableai.ui.FloorPlanScreen
 import com.example.wearableai.ui.SessionsSheet
@@ -157,8 +160,8 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 launch {
-                    viewModel.notes.collect { list ->
-                        binding.tvNotes.text = renderNotes(list)
+                    viewModel.formFields.collect { fieldMap ->
+                        binding.tvNotes.text = renderForm(fieldMap)
                         binding.notesScroll.post {
                             binding.notesScroll.fullScroll(android.view.View.FOCUS_DOWN)
                         }
@@ -227,31 +230,44 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Can't share PDF: ${e.message}", Toast.LENGTH_LONG).show()
             return
         }
-        val intent = Intent(Intent.ACTION_VIEW).apply {
+        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/pdf")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/pdf"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_SUBJECT, "Pre-Incident Plan Report")
+            putExtra(Intent.EXTRA_TEXT, "Attached is the completed FM Global Pre-Incident Plan.")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        val chooser = Intent.createChooser(shareIntent, "View or Share Inspection Report")
+        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(viewIntent))
         try {
-            startActivity(intent)
+            startActivity(chooser)
         } catch (_: ActivityNotFoundException) {
-            Toast.makeText(this, "No PDF viewer installed", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "No PDF viewer or sharing apps available", Toast.LENGTH_LONG).show()
         }
     }
 
-    private fun renderNotes(list: List<com.example.wearableai.shared.Note>): String {
-        if (list.isEmpty()) return ""
-        val byCat = list.groupBy { it.category }
+    private fun renderForm(fieldMap: Map<String, FormField>): String {
+        val filled = fieldMap.values.count { it.value.isNotBlank() }
+        if (filled == 0) return ""
         val sb = StringBuilder()
-        for (cat in NoteCategory.entries) {
-            val items = byCat[cat] ?: continue
-            sb.append("## ").append(cat.heading).append('\n')
-            for (n in items) {
-                sb.append("• ").append(n.markdown)
-                if (n.photoPath != null) sb.append(" [📷]")
-                sb.append('\n')
+        var currentSection: FormSection? = null
+        for (def in FORM_FIELD_DEFINITIONS) {
+            val field = fieldMap[def.id] ?: continue
+            if (field.value.isBlank()) continue
+            if (field.section != currentSection) {
+                currentSection = field.section
+                if (sb.isNotEmpty()) sb.append('\n')
+                sb.append("## ").append(currentSection.heading).append('\n')
             }
+            sb.append("• ").append(field.label).append(": ").append(field.value)
+            if (field.photoPath != null) sb.append(" [📷]")
             sb.append('\n')
         }
+        sb.append("\n($filled/${fieldMap.size} fields filled)")
         return sb.toString().trimEnd()
     }
 
@@ -276,8 +292,10 @@ class MainActivity : AppCompatActivity() {
                         return@collect
                     }
                     is RegistrationState.Available -> Wearables.startRegistration(this@MainActivity)
-                    is RegistrationState.Unavailable ->
-                        viewModel.onStatus("Meta AI app not installed or unavailable.")
+                    is RegistrationState.Unavailable -> {
+                        viewModel.onStatus("Phone mic mode — no glasses detected.")
+                        viewModel.onPermissionsGranted()
+                    }
                     else -> { /* wait */ }
                 }
             }

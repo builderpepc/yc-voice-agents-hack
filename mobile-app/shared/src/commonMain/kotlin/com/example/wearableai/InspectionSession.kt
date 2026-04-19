@@ -38,6 +38,7 @@ class InspectionSession(
     private val reconcileMutex = kotlinx.coroutines.sync.Mutex()
 
     val notes = NoteTaker()
+    val form = PreIncidentFormState()
     val building = BuildingContext()
     private val rag = BuildingDocRag(ragIndexDir)
     private val camera = CameraCapture()
@@ -216,9 +217,11 @@ class InspectionSession(
             // On the local path add_note never gets a photo inline — photos are
             // deferred and reconciled later by Gemini. Pass null so the note is
             // recorded photo-less; reconciliation may patch photoPath in later.
+            "fill_field" -> handleFillField(call, if (deferPhotos) null else turnPhoto[0])
             "add_note" -> handleAddNote(call, if (deferPhotos) null else turnPhoto[0])
             "drop_pin" -> handleDropPin(call)
             "query_docs" -> handleQueryDocs(call)
+            "read_form" -> handleReadForm(call)
             "read_notes" -> handleReadNotes(call)
             "capture_photo" -> handleCapturePhoto(call, turnPhoto, onPhoto, deferPhotos, transcriptForDeferral)
             else -> ToolResult(call.id, call.name, """{"error":"unknown tool"}""")
@@ -250,6 +253,47 @@ class InspectionSession(
         onPhoto(path)
         onMutation?.invoke()
         return ToolResult(call.id, call.name, """{"ok":true}""")
+    }
+
+    private fun handleFillField(call: ToolCall, photoPath: String?): ToolResult {
+        val args = parseArgs(call.argsJson)
+        val fieldId = args["field_id"]?.jsonPrimitive?.contentOrNull ?: ""
+        val value = args["value"]?.jsonPrimitive?.contentOrNull ?: ""
+        val append = args["append"]?.jsonPrimitive?.contentOrNull == "true"
+
+        if (fieldId.isBlank() || value.isBlank()) {
+            return ToolResult(call.id, call.name, """{"ok":false,"reason":"missing field_id or value"}""")
+        }
+
+        val ok = if (append) form.appendField(fieldId, value, photoPath)
+                 else form.fillField(fieldId, value, photoPath)
+
+        return if (ok) {
+            onMutation?.invoke()
+            val filled = form.filledCount()
+            val total = form.totalCount()
+            val nextGaps = form.gaps().take(3).joinToString(", ")
+            ToolResult(call.id, call.name, """{"ok":true,"filled":$filled,"total":$total,"next_unfilled":"$nextGaps"}""")
+        } else {
+            ToolResult(call.id, call.name, """{"ok":false,"reason":"unknown field_id: $fieldId"}""")
+        }
+    }
+
+    private fun handleReadForm(call: ToolCall): ToolResult {
+        val md = form.render()
+        val notesMd = notes.render()
+        val gaps = form.gaps()
+        val escaped = md.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+        val notesEscaped = notesMd.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+        val gapsStr = gaps.take(10).joinToString(", ")
+        val pinList = building.pins.value
+        val pinsJson = if (pinList.isEmpty()) "[]" else pinList.joinToString(",", "[", "]") { p ->
+            """{"label":"${p.label.replace("\"", "\\\"")}","severity":"${p.severity.key}","x":${p.x},"y":${p.y}}"""
+        }
+        return ToolResult(
+            call.id, call.name,
+            """{"form_markdown":"$escaped","notes":"$notesEscaped","filled":${form.filledCount()},"total":${form.totalCount()},"gaps":"$gapsStr","pins":$pinsJson}"""
+        )
     }
 
     private fun handleReadNotes(call: ToolCall): ToolResult {
@@ -343,6 +387,7 @@ class InspectionSession(
     fun resetConversation() {
         agent.resetConversation()
         notes.clear()
+        form.clear()
         building.clear()
         _deferredPhotos.value = emptyList()
     }

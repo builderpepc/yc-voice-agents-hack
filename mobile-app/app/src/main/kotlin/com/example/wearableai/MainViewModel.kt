@@ -11,6 +11,7 @@ import android.os.Environment
 import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.wearableai.shared.FormField
 import com.example.wearableai.shared.InspectionPrompt
 import com.example.wearableai.shared.InspectionSession
 import com.example.wearableai.shared.ModelConfig
@@ -82,6 +83,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     val currentSessionName: StateFlow<String> = _currentSessionName.asStateFlow()
 
     val notes get() = session.notes.notes
+    val formFields: StateFlow<Map<String, FormField>> get() = session.form.fields
     val pins: StateFlow<List<Pin>> get() = session.building.pins
     val floorPlanPath: StateFlow<String?> get() = session.building.floorPlanPath
     val docsIndexedChunks: StateFlow<Int> get() = session.building.docsIndexedChunks
@@ -184,13 +186,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 _inspectionEnabled.value = true
                 return@launch
             }
-            _status.value = "Connecting to glasses…"
+            _status.value = "Connecting…"
             val connected = session.connect()
             if (!connected) {
-                _status.value = "Connection failed — is the device paired?"
-                _inspectionLabel.value = idleLabel()
-                _inspectionEnabled.value = true
-                return@launch
+                _status.value = "No glasses — using phone mic."
             }
 
             agentRunning = true
@@ -292,17 +291,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Speaks a locally-generated recap. Cheaper and more reliable than a model roundtrip. */
     fun speakSummary() {
-        val list = notes.value
-        if (list.isEmpty()) {
-            speak("No observations recorded yet.")
+        val filled = session.form.filledCount()
+        val total = session.form.totalCount()
+        val noteCount = notes.value.size
+        if (filled == 0 && noteCount == 0) {
+            speak("No fields filled and no observations recorded yet.")
             return
         }
-        val byCat = list.groupBy { it.category }
         val sb = StringBuilder()
-        sb.append("${list.size} observation${if (list.size == 1) "" else "s"} so far. ")
-        for (cat in NoteCategory.entries) {
-            val items = byCat[cat] ?: continue
-            sb.append("${cat.heading}: ${items.size}. ")
+        if (filled > 0) {
+            sb.append("$filled of $total form fields filled. ")
+            val gaps = session.form.gaps()
+            if (gaps.isNotEmpty()) {
+                sb.append("Next missing: ${gaps.take(3).joinToString(", ")}. ")
+            }
+        }
+        if (noteCount > 0) {
+            sb.append("$noteCount free-form observation${if (noteCount == 1) "" else "s"}. ")
         }
         sb.append("Pins on floor plan: ${pins.value.size}.")
         speak(sb.toString())
@@ -318,7 +323,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             _status.value = "Exporting PDF…"
             try {
                 val file = withContext(Dispatchers.IO) {
-                    PdfExporter.export(getApplication(), notes.value)
+                    PdfExporter.export(getApplication(), formFields.value)
                 }
                 _status.value = "Saved: ${file.name}"
                 android.util.Log.i("MainViewModel", "PDF exported to ${file.absolutePath}")

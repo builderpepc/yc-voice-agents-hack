@@ -42,7 +42,12 @@ class VoiceAgent(private val cloudFallback: CloudFallback) {
 
     suspend fun init(modelPath: String) = withContext(Dispatchers.Default) {
         if (modelHandle == 0L) {
-            modelHandle = cactusInit(modelPath, null, false)
+            try {
+                modelHandle = cactusInit(modelPath, null, false)
+            } catch (e: Throwable) {
+                println("[VoiceAgent] Local model init failed (cloud-only mode): ${e.message}")
+                modelHandle = 0L
+            }
         }
     }
 
@@ -170,7 +175,7 @@ class VoiceAgent(private val cloudFallback: CloudFallback) {
 
     fun release() {
         if (modelHandle != 0L) {
-            cactusDestroy(modelHandle)
+            try { cactusDestroy(modelHandle) } catch (_: Throwable) {}
             modelHandle = 0L
         }
     }

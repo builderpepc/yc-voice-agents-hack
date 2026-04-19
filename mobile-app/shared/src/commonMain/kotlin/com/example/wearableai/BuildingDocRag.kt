@@ -32,13 +32,18 @@ class BuildingDocRag(
     /** Open or create the persistent index at [indexDir]. Must be called once per session. */
     suspend fun open() = withContext(Dispatchers.Default) {
         if (indexHandle == 0L) {
-            indexHandle = cactusIndexInit(indexDir, embeddingDim)
+            try {
+                indexHandle = cactusIndexInit(indexDir, embeddingDim)
+            } catch (e: Throwable) {
+                println("[BuildingDocRag] Index init failed (cloud-only mode): ${e.message}")
+                indexHandle = 0L
+            }
         }
     }
 
     fun close() {
         if (indexHandle != 0L) {
-            cactusIndexDestroy(indexHandle)
+            try { cactusIndexDestroy(indexHandle) } catch (_: Throwable) {}
             indexHandle = 0L
         }
     }
