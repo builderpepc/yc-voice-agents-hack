@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-files-path name="reports" path="Documents/" />
+    <files-path name="reports_internal" path="reports/" />
+</paths>

@@ -129,7 +129,9 @@ actual class WearableConnector {
 
                 val frame = chunk.copyOf(read)
                 val peak = frame.peakAmplitude()
-                val isSilent = peak < 500
+                // 1500 was too high — agent was missing normal-volume speech.
+                // 800 still rejects HVAC hum / breathing seen at ~500 peak.
+                val isSilent = peak < 800
 
                 totalFrames++
                 if (totalFrames % 100 == 0) {
