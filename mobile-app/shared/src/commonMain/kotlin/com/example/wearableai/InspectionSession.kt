@@ -115,6 +115,16 @@ class InspectionSession(
                         t.printStackTrace()
                         onError(t.message ?: "Turn error")
                     }
+                    // Emulator workaround: TTS playback can kill the mic stream.
+                    // Restart audio capture after each turn to ensure continued recording.
+                    if (preferCloud) {
+                        wearableConnector.stopAudioStream()
+                        kotlinx.coroutines.delay(300)
+                        wearableConnector.startAudioStream { utteranceWavPath ->
+                            onUtterance(utteranceWavPath)
+                            queue.trySend(utteranceWavPath)
+                        }
+                    }
                 }
             }
         }
