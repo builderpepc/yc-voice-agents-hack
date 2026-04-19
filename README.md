@@ -1,44 +1,13 @@
-<img src="assets/banner.png" alt="Logo" style="border-radius: 30px; width: 60%;">
+# FireSight
+*Voice automation for fire department pre-incident inspections* - [Video](https://www.youtube.com/watch?v=-jg3ZX8wHtI)
+Submission for [Cactus AI and Google Deepmind's Voice Agent Hackathon at Y Combinator](https://github.com/cactus-compute/voice-agents-hack) by [Ethel Zhang](https://www.linkedin.com/in/ethel-shiqi-zhang/), [Troy Gunawardene](https://www.linkedin.com/in/troy-gwdn/), [Ifeoluwa Oyetimehin](https://www.linkedin.com/in/ifeoluwa-oyetimehin/), and [Arjun Chidambaram](https://www.linkedin.com/in/arjunchidambaram/).
 
-## Context
-- Cactus (YC S25) is a low-latency engine for mobile devices & wearables. 
-- Cactus runs locally on edge devices with hybrid routing of complex tasks to cloud models like Gemini.
-- Google DeepMind just released Gemma 4, the first on-device model you can voice-prompt. 
-- Gemma 4 on Cactus is multimodal, supporting voice, vision, function calling, transcription and more! 
+## The Problem We Solve
+Fire departments - the real firefighters themselves, not (just) city officials - have to spend countless hours every year performing inspections on buildings called pre-incident surveys. The purpose of these inspections is to assess risk and strategize for potential emergencies. For high-risk buildings like hospitals or schools, these inspections can happen multiple times per year. As part of these inspections, firefighters need to record countless data points in outdated, clunky web forms or even on paper. 
 
-## Challenge
-- All teams MUST build products that use Gemma 4 on Cactus. 
-- All products MUST leverage voice functionality in some way. 
-- All submissions MUST be working MVPs capable of venture backing. 
-- Winner takes all: Guaranteed YC Interview + GCP Credits. 
+We spoke to real industry professionals and firefighters at departments like FDNY and Colonia for feedback and insights. There's a real need here, and we think we can build a better solution with the technology available to us today.
 
-## Special Tracks 
-- Best On-Device Enterprise Agent (B2B): Highest commercial viability for offline tools.
-- Ultimate Consumer Voice Experience (B2C): Best use of low-latency compute to create ultra-natural, instantaneous voice interaction.
-- Deepest Technical Integration: Pushing the boundaries of the hardware/software stack (e.g., novel routing, multi-agent on-device setups, extreme power optimization).
+## How Our Project Works
+Rather than making firefighters meticulously type pages of notes into a phone or tablet, FireSight lets the inspector simply speak out loud about what they're looking at. Using AI glasses (e.g. Meta Ray-Bans), the agent can capture pictures to attach to the inspector's comments and make further observations based on the contents. The inspector can also ask the agent questions about what's been documented, what's missing, what existing records show, etc. When the inspection is done, the firefighter can export a PDF report with a single tap.
 
-Prizes per special track: 
-- 1st Place: $2,000 in GCP credits
-- 2nd Place: $1,000 in GCP credits 
-- 3rd Place: $500 in GCP credits 
-
-## Judging 
-- **Rubric 1**: The relevnance and realness of the problem and appeal to enterprises and VCs. 
-- **Rubric 2**: Correcness & quality of the MVP and demo. 
-
-## Setup (clone this repo and hollistically follow)
-- Step 1: Fork this repo, clone to your Mac, open terminal.
-- Step 2: `git clone https://github.com/cactus-compute/cactus`
-- Step 3: `cd cactus && source ./setup && cd ..` (re-run in new terminal)
-- Step 4: `cactus build --python`
-- Step 5: `cactus download google/functiongemma-270m-it --reconvert`
-- Step 6: Get cactus key from the [cactus website](https://cactuscompute.com/dashboard/api-keys)
-- Sept 7: Run `cactus auth` and enter your token when prompted.
-- Step 8: `pip install google-genai` (if using cloud fallback) 
-- Step 9: Obtain Gemini API key from [Google AI Studio](https://aistudio.google.com/api-keys) (if using cloud fallback) 
-- Step 10: `export GEMINI_API_KEY="your-key"` (if using cloud fallback) 
-
-## Next steps
-1. Read Cactus docs carefully: [Link](https://docs.cactuscompute.com/latest/)
-2. Read Gemma 4 on Cactus walkthrough carefully: [Link](https://docs.cactuscompute.com/latest/blog/gemma4/)
-3. Cactus & DeepMind team would be available on-site. 
+Moreover, firefighters need to make detailed observations about every nook and cranny, including places like basements, elevators, or electrical rooms that might not have great internet or cell signal. As such, we've built in an  offline AI fallback. Higher-powered AI operations wait for an internet connection, while regular observations and Q&A are supported locally.
