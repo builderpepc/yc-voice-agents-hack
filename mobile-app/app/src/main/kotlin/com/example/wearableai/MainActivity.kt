@@ -12,11 +12,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.wearableai.databinding.ActivityMainBinding
-import com.meta.wearable.dat.core.Wearables
-import com.meta.wearable.dat.core.types.Permission
-import com.meta.wearable.dat.core.types.PermissionStatus
-import com.meta.wearable.dat.core.types.DatResult
-import com.meta.wearable.dat.core.types.RegistrationState
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -24,28 +19,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
 
-    // Step 1: Android system permissions
-    private val androidPermissionLauncher = registerForActivityResult(
+    private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
         if (grants.values.all { it }) {
-            startWearableRegistration()
-        } else {
-            Toast.makeText(this, "Permissions required for wearable access", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    // Step 3: Wearable microphone permission via Meta AI app
-    private val wearableMicLauncher = registerForActivityResult(
-        Wearables.RequestPermissionContract()
-    ) { result ->
-        val granted = result.getOrNull() is PermissionStatus.Granted
-        android.util.Log.d("MainActivity", "Wearable mic permission result: $result, granted=$granted")
-        if (granted) {
             viewModel.onPermissionsGranted()
         } else {
-            viewModel.onWearablePermissionDenied()
-            Toast.makeText(this, "Microphone permission required for glasses", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Microphone permission required", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -54,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnConnect.setOnClickListener { viewModel.connectGlasses() }
+        binding.btnConnect.setOnClickListener { viewModel.connectMic() }
         binding.btnTranscribe.setOnClickListener { viewModel.toggleAgent() }
         binding.cbLocalInference.setOnCheckedChangeListener { _, checked ->
             viewModel.setForceLocal(checked)
@@ -78,45 +58,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        requestAndroidPermissions()
+        requestPermissions()
     }
 
-    private fun requestAndroidPermissions() {
+    private fun requestPermissions() {
         val needed = arrayOf(
-            Manifest.permission.BLUETOOTH_CONNECT,
-            Manifest.permission.BLUETOOTH_SCAN,
             Manifest.permission.RECORD_AUDIO,
         ).filter { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }
 
         if (needed.isEmpty()) {
-            startWearableRegistration()
+            viewModel.onPermissionsGranted()
         } else {
-            androidPermissionLauncher.launch(needed.toTypedArray())
-        }
-    }
-
-    // Step 2: Register app with Meta AI, then request wearable mic permission
-    private fun startWearableRegistration() {
-        viewModel.onStatus("Registering with Meta AI app…")
-        lifecycleScope.launch {
-            Wearables.registrationState.collect { state ->
-                android.util.Log.d("MainActivity", "RegistrationState: $state")
-                when (state) {
-                    is RegistrationState.Registered -> {
-                        // Already registered — go straight to permission check
-                        wearableMicLauncher.launch(Permission.MICROPHONE)
-                        return@collect
-                    }
-                    is RegistrationState.Available -> {
-                        // Not registered yet — start registration flow
-                        Wearables.startRegistration(this@MainActivity)
-                    }
-                    is RegistrationState.Unavailable -> {
-                        viewModel.onStatus("Meta AI app not installed or unavailable.")
-                    }
-                    else -> { /* Registering / Unregistering — wait */ }
-                }
-            }
+            permissionLauncher.launch(needed.toTypedArray())
         }
     }
 }

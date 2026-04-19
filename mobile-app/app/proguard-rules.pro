@@ -1,2 +1,0 @@
--keep class com.cactus.** { *; }
--keep class com.meta.wearable.** { *; }

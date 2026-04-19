@@ -1,8 +1,21 @@
 import java.util.Properties
+import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+}
+
+val envVars = mutableMapOf<String, String>()
+val envFile = rootProject.file("../.env")
+if (envFile.exists()) {
+    envFile.readLines().forEach { line ->
+        val trimmed = line.trim()
+        if (trimmed.isNotEmpty() && !trimmed.startsWith("#") && trimmed.contains("=")) {
+            val parts = trimmed.split("=", limit = 2)
+            envVars[parts[0].trim()] = parts[1].trim().removeSurrounding("\"")
+        }
+    }
 }
 
 val localProps = Properties().also { props ->
@@ -20,13 +33,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        val metaAppId = localProps.getProperty("meta_wearables_app_id", "YOUR_APP_ID_HERE")
-        val metaClientToken = localProps.getProperty("meta_wearables_client_token", "YOUR_CLIENT_TOKEN_HERE")
-        val geminiApiKey = localProps.getProperty("gemini_api_key", "")
-        buildConfigField("String", "META_WEARABLES_APP_ID", "\"$metaAppId\"")
+        val geminiApiKey = envVars["GEMINI_API_KEY"] ?: localProps.getProperty("gemini_api_key", "")
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
-        manifestPlaceholders["META_WEARABLES_APP_ID"] = metaAppId
-        manifestPlaceholders["META_WEARABLES_CLIENT_TOKEN"] = metaClientToken
     }
 
     buildTypes {
@@ -66,10 +74,6 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
-
-    // Meta Wearables Device Access Toolkit
-    implementation(libs.mwdat.core)
-    implementation(libs.mwdat.camera)
 
     // Google AI (Gemini cloud fallback)
     implementation(libs.google.ai.generativeai)

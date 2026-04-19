@@ -1,20 +1,2 @@
-# Copy this to local.properties and fill in your values.
-# local.properties is gitignored.
-
-# Android SDK path (required)
-sdk.dir=/path/to/Android/Sdk
-
-# GitHub personal access token with read:packages scope (required for Meta Wearables SDK)
-# Create at: https://github.com/settings/tokens
-github_user=your_github_username
-github_token=ghp_your_token_here
-
-# Meta Wearables app credentials (required at runtime to talk to Meta AI glasses).
-# Register an application at https://wearables.developer.meta.com/, then copy the
-# app ID and client token from the app's dashboard.
-meta_wearables_app_id=your_app_id_here
-meta_wearables_client_token=your_client_token_here
-
-# Google AI Studio key for the Gemini 2.5 Flash cloud fallback.
-# Create a key at https://aistudio.google.com/app/apikey.
-gemini_api_key=your_gemini_api_key_here
+# Google Gemini API Key for cloud fallback
+gemini_api_key=YOUR_GEMINI_API_KEY_HERE

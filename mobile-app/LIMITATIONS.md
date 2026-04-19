@@ -11,12 +11,12 @@ The KMP `shared` module is structured for cross-platform but iOS support is inco
 
 ### What's missing
 
-**`WearableConnector.ios.kt`** — `connect()` and `startAudioStream()` are `TODO()` stubs. The Meta Wearables DAT SDK has an iOS counterpart but hasn't been integrated. Until this is implemented the audio pipeline does nothing on iOS.
+**`VoiceInputProvider.ios.kt`** — `connect()` and `startAudioStream()` are `TODO()` stubs. The Meta Wearables DAT SDK has an iOS counterpart but hasn't been integrated. Until this is implemented the audio pipeline does nothing on iOS.
 
 **No iOS app module** — there is no Xcode project or SwiftUI/UIKit layer. To ship on iOS you would need to:
 1. Run `./gradlew assembleSharedXCFramework` to produce `Shared.xcframework`
 2. Create a new Xcode project and import the framework
-3. Implement `WearableConnector.ios.kt` using the Meta Wearables iOS SDK
+3. Implement `VoiceInputProvider.ios.kt` using the Meta Wearables iOS SDK
 4. Build the equivalent of `MainActivity` / `MainViewModel` in SwiftUI
 
 ## Android

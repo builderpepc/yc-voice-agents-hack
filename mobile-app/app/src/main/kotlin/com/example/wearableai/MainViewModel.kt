@@ -8,7 +8,7 @@ import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.wearableai.shared.ModelConfig
-import com.example.wearableai.shared.WearableAISession
+import com.example.wearableai.shared.MobileAISession
 import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,9 +18,9 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val session = WearableAISession(GeminiCloudFallback())
+    private val session = MobileAISession(GeminiCloudFallback())
 
-    private val _status = MutableStateFlow("Ready — tap Connect Glasses to begin.")
+    private val _status = MutableStateFlow("Ready — tap Connect Mic to begin.")
     val status: StateFlow<String> = _status.asStateFlow()
 
     private val _transcript = MutableStateFlow("")
@@ -40,7 +40,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private var agentRunning = false
 
-    // Speaks assistant replies aloud. With the glasses connected as the active
+    // Speaks assistant replies aloud. With the mic connected as the active
     // BT audio sink, Android routes system TTS output to them automatically.
     private var ttsReady = false
     private var tts: TextToSpeech? = null
@@ -64,12 +64,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun onPermissionsGranted() {
-        _status.value = "Ready — tap Connect Glasses."
+        _status.value = "Ready — tap Connect Mic."
         _connectEnabled.value = true
     }
 
-    fun onWearablePermissionDenied() {
-        _status.value = "Microphone permission denied — cannot use glasses mic."
+    fun onMicPermissionDenied() {
+        _status.value = "Microphone permission denied — cannot use mic mic."
         _connectEnabled.value = false
     }
 
@@ -77,9 +77,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         _status.value = msg
     }
 
-    fun connectGlasses() {
+    fun connectMic() {
         viewModelScope.launch {
-            _status.value = "Connecting to glasses…"
+            _status.value = "Connecting to mic…"
             _connectEnabled.value = false
 
             val modelPath = resolveModelPath()

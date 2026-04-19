@@ -8,13 +8,10 @@ import com.cactus.cactusSetAppId
 import com.cactus.cactusSetGemmThreads
 import com.cactus.cactusSetTelemetryEnvironment
 import com.example.wearableai.shared.appContext
-import com.meta.wearable.dat.core.Wearables
-
-class WearableAIApp : Application() {
+class MobileAIApp : Application() {
     override fun onCreate() {
         super.onCreate()
         appContext = this
-        Wearables.initialize(this)
         try {
             cactusSetTelemetryEnvironment(cacheDir.absolutePath)
             cactusSetAppId("com.example.wearableai")
@@ -24,7 +21,7 @@ class WearableAIApp : Application() {
                 android.util.Log.d("Cactus", "[$level/$component] $message")
             })
         } catch (e: Throwable) {
-            android.util.Log.w("WearableAIApp", "libcactus.so not found — on-device inference unavailable: ${e.message}")
+            android.util.Log.w("MobileAIApp", "libcactus.so not found — on-device inference unavailable: ${e.message}")
         }
     }
 }

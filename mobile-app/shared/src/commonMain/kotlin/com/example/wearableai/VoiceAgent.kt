@@ -15,7 +15,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Orchestrates one voice conversation turn:
- *  1. Receives a speech audio file path from [WearableAISession]
+ *  1. Receives a speech audio file path from [MobileAISession]
  *  2. Routes to local Gemma 4 E4B (via Cactus) or Gemini cloud fallback
  *  3. Returns the assistant text response
  *
@@ -138,7 +138,7 @@ class VoiceAgent(private val cloudFallback: CloudFallback) {
     }
 }
 
-/** Cloud inference interface — implemented per-platform and injected into [WearableAISession]. */
+/** Cloud inference interface — implemented per-platform and injected into [MobileAISession]. */
 interface CloudFallback {
     suspend fun generateFromAudio(
         audioFilePath: String,

@@ -29,5 +29,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "WearableAI"
+rootProject.name = "MobileAI"
 include(":app", ":shared")

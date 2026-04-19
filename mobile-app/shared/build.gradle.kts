@@ -45,7 +45,6 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.kotlinx.coroutines.android)
-            implementation(libs.mwdat.core)
         }
     }
 }

@@ -12,13 +12,13 @@ import kotlinx.coroutines.launch
  * Entry point for a voice agent session.
  *
  * Wires together:
- *  - [WearableConnector] — audio stream from Meta glasses
+ *  - [VoiceInputProvider] — audio stream from phone mic
  *  - [VoiceAgent]        — Gemma 4 E4B local inference (Cactus) with Gemini cloud fallback
  *
- * Call [start] once the wearable is connected. Audio is buffered until a speech segment
+ * Call [start] once permissions are granted. Audio is buffered until a speech segment
  * is detected (via silence gap), written to a temp WAV file, then handed to [VoiceAgent].
  */
-class WearableAISession(private val cloudFallback: CloudFallback) {
+class MobileAISession(private val cloudFallback: CloudFallback) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val agent = VoiceAgent(cloudFallback)
@@ -27,7 +27,7 @@ class WearableAISession(private val cloudFallback: CloudFallback) {
     /** Must be called before [start]. [modelPath] points to the on-device GGUF file. */
     suspend fun init(modelPath: String) = agent.init(modelPath)
 
-    suspend fun connect(): Boolean = wearableConnector.connect()
+    suspend fun connect(): Boolean = voiceInputProvider.connect()
 
     /**
      * Starts the voice agent loop.
@@ -52,8 +52,8 @@ class WearableAISession(private val cloudFallback: CloudFallback) {
 
         collectJob = scope.launch {
             launch {
-                wearableConnector.startAudioStream { utteranceWavPath ->
-                    println("[WearableAISession] utterance received: $utteranceWavPath")
+                voiceInputProvider.startAudioStream { utteranceWavPath ->
+                    println("[MobileAISession] utterance received: $utteranceWavPath")
                     onUtterance(utteranceWavPath)
                     queue.trySend(utteranceWavPath)
                 }
@@ -62,10 +62,10 @@ class WearableAISession(private val cloudFallback: CloudFallback) {
                 for (path in queue) {
                     try {
                         val turn = agent.processUtterance(path, preferCloud)
-                        println("[WearableAISession] dispatching onResponse (replyLen=${turn.assistantReply.length})")
+                        println("[MobileAISession] dispatching onResponse (replyLen=${turn.assistantReply.length})")
                         onResponse(turn)
                     } catch (t: Throwable) {
-                        println("[WearableAISession] inference threw: ${t::class.simpleName}: ${t.message}")
+                        println("[MobileAISession] inference threw: ${t::class.simpleName}: ${t.message}")
                         t.printStackTrace()
                         onError(t.message ?: "Inference error")
                     }
@@ -75,7 +75,7 @@ class WearableAISession(private val cloudFallback: CloudFallback) {
     }
 
     fun stop() {
-        wearableConnector.stopAudioStream()
+        voiceInputProvider.stopAudioStream()
         collectJob?.cancel()
         collectJob = null
     }
@@ -84,7 +84,7 @@ class WearableAISession(private val cloudFallback: CloudFallback) {
 
     fun destroy() {
         stop()
-        wearableConnector.disconnect()
+        voiceInputProvider.disconnect()
         agent.release()
         scope.cancel()
     }

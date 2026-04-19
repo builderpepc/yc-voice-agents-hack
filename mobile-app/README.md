@@ -114,10 +114,10 @@ mobile-app/
 │   ├── commonMain/
 │   │   ├── ModelConfig.kt        # Model constants + system prompt (including <heard> directive)
 │   │   ├── VoiceAgent.kt         # Local/cloud orchestration; serializes turns via Mutex; parses <heard>
-│   │   ├── WearableAISession.kt  # Connect → listen → inference queue
-│   │   └── WearableConnector.kt  # expect/actual interface for audio from glasses
+│   │   ├── MobileAISession.kt  # Connect → listen → inference queue
+│   │   └── VoiceInputProvider.kt  # expect/actual interface for audio from glasses
 │   └── androidMain/
-│       ├── WearableConnector.android.kt   # Meta Wearables DAT SDK + AudioRecord + VAD
+│       ├── VoiceInputProvider.android.kt   # Meta Wearables DAT SDK + AudioRecord + VAD
 │       └── com/cactus/                    # Cactus JNI bindings
 └── app/src/main/jniLibs/arm64-v8a/libcactus.so   # Built from ../cactus (gitignored)
 ```
