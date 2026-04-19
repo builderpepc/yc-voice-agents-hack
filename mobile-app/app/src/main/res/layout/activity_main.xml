@@ -1,48 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:padding="12dp">
 
     <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="0dp"
+        android:id="@+id/tvSessionName"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Initializing…"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:textSize="11sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:alpha="0.75"
+        android:gravity="center"
+        android:layout_marginBottom="4dp" />
+
+    <Button
+        android:id="@+id/btnInspection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Start Inspection"
+        android:enabled="false" />
 
     <LinearLayout
-        android:id="@+id/buttonRow"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="12dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvStatus">
+        android:layout_marginTop="6dp">
 
-        <Button
-            android:id="@+id/btnConnect"
+        <ImageButton
+            android:id="@+id/btnLoadFloorPlan"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
-            android:text="Connect Glasses"
-            android:enabled="false" />
+            android:src="@drawable/ic_tabler_map"
+            android:scaleType="centerInside"
+            android:contentDescription="Load floor plan" />
 
-        <Button
-            android:id="@+id/btnTranscribe"
+        <ImageButton
+            android:id="@+id/btnLoadDocs"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:src="@drawable/ic_tabler_files"
+            android:scaleType="centerInside"
+            android:contentDescription="Load documents" />
+
+        <ImageButton
+            android:id="@+id/btnSummary"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:src="@drawable/ic_tabler_list_details"
+            android:scaleType="centerInside"
+            android:contentDescription="Speak summary" />
+
+        <ImageButton
+            android:id="@+id/btnCapture"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:src="@drawable/ic_tabler_camera"
+            android:scaleType="centerInside"
+            android:contentDescription="Capture photo" />
+
+        <ImageButton
+            android:id="@+id/btnExportPdf"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="4dp"
+            android:src="@drawable/ic_tabler_file_pdf"
+            android:scaleType="centerInside"
+            android:contentDescription="Export PDF" />
+
+        <ImageButton
+            android:id="@+id/btnSessions"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
-            android:text="Start Agent"
-            android:enabled="false" />
+            android:src="@drawable/ic_tabler_folders"
+            android:scaleType="centerInside"
+            android:contentDescription="Inspections" />
     </LinearLayout>
 
     <CheckBox
@@ -50,33 +97,100 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Force local inference (Gemma 4 E2B)"
-        android:textSize="13sp"
+        android:textSize="12sp"
         android:checked="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonRow"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="4dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="10dp"
+        android:background="#22000000"
+        android:padding="6dp">
+
+        <TextView
+            android:id="@+id/tvSectionNotes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Observations"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginEnd="10dp" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Initializing…"
+            android:textSize="12sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
+    </LinearLayout>
 
     <ScrollView
-        android:id="@+id/transcriptScroll"
-        android:layout_width="0dp"
+        android:id="@+id/notesScroll"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_weight="1"
         android:background="#11000000"
         android:padding="8dp"
         android:fillViewport="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cbLocalInference"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="4dp">
 
         <TextView
-            android:id="@+id/tvTranscript"
+            android:id="@+id/tvNotes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Transcript will appear here…"
-            android:textSize="16sp"
+            android:hint="Observations will appear here as you speak…"
+            android:textSize="14sp"
+            android:fontFamily="monospace"
             android:textIsSelectable="true" />
     </ScrollView>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Collapsible "Floor Plan" section. Header is always visible at the bottom;
+         the ComposeView toggles GONE/VISIBLE so the notes scroll reclaims space. -->
+    <LinearLayout
+        android:id="@+id/floorPlanHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#22000000"
+        android:padding="8dp"
+        android:layout_marginTop="6dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/ivFloorPlanChevron"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_tabler_chevron_down"
+            android:contentDescription="Toggle floor plan" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Floor Plan"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/floorPlanCompose"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5" />
+
+    <!-- Hosts the sessions modal bottom sheet; height=0 since it renders outside layout flow. -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/sessionsSheetCompose"
+        android:layout_width="match_parent"
+        android:layout_height="0dp" />
+
+</LinearLayout>

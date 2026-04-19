@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
 }
 
 val localProps = Properties().also { props ->
@@ -44,6 +45,7 @@ android {
     buildFeatures {
         buildConfig = true
         viewBinding = true
+        compose = true
     }
 }
 
@@ -67,10 +69,21 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // JSON serialization runtime (schemas defined in :shared with the plugin)
+    implementation(libs.kotlinx.serialization.json)
+
     // Meta Wearables Device Access Toolkit
     implementation(libs.mwdat.core)
     implementation(libs.mwdat.camera)
 
     // Google AI (Gemini cloud fallback)
     implementation(libs.google.ai.generativeai)
+
+    // Compose (for floor-plan pan/zoom + pins, hosted in a ComposeView)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.activity.compose)
 }

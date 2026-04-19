@@ -43,18 +43,18 @@ cp ../cactus/android/libcactus.so app/src/main/jniLibs/arm64-v8a/
 
 (Or `bash setup-native.sh` which does the same.)
 
-### 3. Install the Gemma 4 E2B model (manual — no in-app download)
+### 3. Install the FunctionGemma 270M model (manual — no in-app download)
 
-Gemma 4 E2B uses Cactus's own directory format (not GGUF). The weights are ~4.7 GB and must be sideloaded. **You MUST install them into the app's internal ext4 storage**, not `/sdcard`: Cactus's `mmap` + `MADV_DONTNEED` weight paging crashes in `cactus_gemm_int4` on FUSE-mounted `/sdcard`.
+The local agent runs **FunctionGemma 270M** — a Gemma 3 270M fine-tune for tool calling, ~214 MB int4, text-only. We swapped from Gemma 4 E2B because E2B's 3.5 GB mmap footprint triggered `lmkd` SIGKILL on the dev device; FunctionGemma's footprint comfortably fits the RAM budget. Transcription is delegated to Android's system `SpeechRecognizer` (see step 4), so local mode no longer needs an on-device audio encoder.
 
-**Download** from the Cactus HuggingFace repo (requires `huggingface-cli login` or your HF token):
+FunctionGemma uses Cactus's own directory format (not GGUF). **You MUST install it into the app's internal ext4 storage**, not `/sdcard`: Cactus's `mmap` + `MADV_DONTNEED` weight paging crashes in `cactus_gemm_int4` on FUSE-mounted `/sdcard`.
+
+**Download + unpack** (Cactus ships the weights zipped under `weights/`; extract the int4 archive to the repo root):
 
 ```bash
-huggingface-cli download cactus-compute/google--gemma-4-E2B-it \
-  --local-dir /tmp/gemma-4-E2B-it
+hf download Cactus-Compute/functiongemma-270m-it --local-dir /tmp/functiongemma-270m-it
+unzip -q /tmp/functiongemma-270m-it/weights/functiongemma-270m-it-int4.zip -d /tmp/fg-extract
 ```
-
-or via `curl`/`git lfs clone` against `https://huggingface.co/cactus-compute/google--gemma-4-E2B-it`.
 
 **Push to the phone and move to internal storage:**
 
@@ -63,20 +63,29 @@ or via `curl`/`git lfs clone` against `https://huggingface.co/cactus-compute/goo
 ./gradlew :app:assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 
-# 2. Push the model to /sdcard (fast, no root needed).
-adb push /tmp/gemma-4-E2B-it /sdcard/gemma-4-E2B-it
+# 2. Push the extracted directory to /sdcard (fast, no root needed).
+adb push /tmp/fg-extract /sdcard/functiongemma-270m-it
 
-# 3. Copy it into the app's private ext4 storage via run-as (works on a
-#    debuggable build; no root). This is the path the app actually reads.
-adb shell run-as com.example.wearableai cp -r /sdcard/gemma-4-E2B-it files/
+# 3. Copy it into the app's private ext4 storage via run-as (debuggable build; no root).
+adb shell run-as com.example.wearableai cp -r /sdcard/functiongemma-270m-it files/
 
-# 4. Reclaim the ~4.7 GB on /sdcard.
-adb shell rm -r /sdcard/gemma-4-E2B-it
+# 4. Reclaim /sdcard.
+adb shell rm -r /sdcard/functiongemma-270m-it
 ```
 
-Verify: `adb shell run-as com.example.wearableai ls files/gemma-4-E2B-it` should list the model shards.
+Verify: `adb shell run-as com.example.wearableai ls files/functiongemma-270m-it` should list 243 files (`config.txt`, `tokenizer.json`, many `*.weights`).
 
-### 4. Pair your glasses
+> Legacy: if you still want to test Gemma 4 E2B, it's under `cactus-compute/google--gemma-4-E2B-it` (~4.7 GB) and goes in `files/gemma-4-E2B-it/`. The constant is still wired in `ModelConfig` but not loaded by default.
+
+### 4. Enable offline speech recognition (local ASR path)
+
+Force-local mode uses Android's system `SpeechRecognizer`. For on-device (private, offline) transcription, download the English-US offline language pack on the dev device:
+
+- **Settings → System → Languages & Input → On-device speech recognition → Add a language → English (US)**.
+
+Without the offline pack, the recognizer silently falls back to Google's cloud transcription service (network-only). Android 13+ is recommended; the app pins the recognizer to `VOICE_COMMUNICATION` audio source (API 33+) so it pulls from the BT SCO route to the glasses.
+
+### 5. Pair your glasses
 
 Open the **Meta AI** app on the phone, sign in, and pair the glasses. The WearableAI app talks to them indirectly through the Meta AI app — the glasses must already be paired and connected there before you launch WearableAI.
 
