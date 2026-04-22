@@ -1,4 +1,4 @@
-<img width="2816" height="536" alt="Gemini_Generated_Image_efwdqmefwdqmefwd" src="https://github.com/user-attachments/assets/b04ffb6f-8f30-4d1d-9c67-591804805cf2" />
+<img height="300" alt="Gemini_Generated_Image_efwdqmefwdqmefwd" src="https://github.com/user-attachments/assets/b04ffb6f-8f30-4d1d-9c67-591804805cf2" />
 
 
 # FireSight
